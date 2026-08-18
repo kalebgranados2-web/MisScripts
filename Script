@@ -1,0 +1,250 @@
+-- =============================================================================
+-- CONFIGURACIÓN INICIAL Y ESTADOS
+-- =============================================================================
+local AimbotSettings = {
+    Enabled = true,
+    WallCheck = true,          -- Filtro de paredes activo por defecto
+    TargetPart = "Head",       -- Fuerza tiro a la cabeza
+    FOV_Radius = 150,          -- Tamaño inicial del círculo (configurable)
+    FOV_Visible = true,        -- Control de visibilidad del círculo
+    FOV_OffsetY = -50          -- Posición: Centro un poco arriba
+}
+
+local LocalPlayer = game:GetService("Players").LocalPlayer
+local Camera = game:GetService("Workspace").CurrentCamera
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local CoreGui = game:GetService("CoreGui")
+
+-- =============================================================================
+-- CREACIÓN DEL MENÚ PROFESIONAL INTERACTIVO "KALEB"
+-- =============================================================================
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "KalebProfessionalGui"
+ScreenGui.ResetOnSpawn = false
+
+-- Intenta alojar en CoreGui para evitar reinicios, si no, usa PlayerGui
+local success, err = pcall(function() ScreenGui.Parent = CoreGui end)
+if not success then ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui") end
+
+-- Contenedor Principal (Estilo Premium Oscuro)
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
+MainFrame.Size = UDim2.new(0, 260, 0, 290)
+MainFrame.Position = UDim2.new(0.05, 0, 0.3, 0)
+MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.Draggable = true
+MainFrame.Parent = ScreenGui
+
+-- Línea estética superior (Azul Neón)
+local TopLine = Instance.new("Frame")
+TopLine.Size = UDim2.new(1, 0, 0, 4)
+TopLine.BackgroundColor3 = Color3.fromRGB(0, 180, 255)
+TopLine.BorderSizePixel = 0
+TopLine.Parent = MainFrame
+
+-- Título Principal: KALEB
+local TitleLabel = Instance.new("TextLabel")
+TitleLabel.Size = UDim2.new(1, 0, 0, 40)
+TitleLabel.Position = UDim2.new(0, 0, 0, 4)
+TitleLabel.BackgroundTransparency = 1
+TitleLabel.Text = "KALEB SYSTEM"
+TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+TitleLabel.Font = Enum.Font.GothamBold
+TitleLabel.TextSize = 16
+TitleLabel.Parent = MainFrame
+
+-- 1. Botón Alternar Aimbot
+local AimbotBtn = Instance.new("TextButton")
+AimbotBtn.Size = UDim2.new(0, 220, 0, 32)
+AimbotBtn.Position = UDim2.new(0, 20, 0, 50)
+AimbotBtn.BackgroundColor3 = Color3.fromRGB(0, 180, 255)
+AimbotBtn.Text = "AIMBOT: ACTIVO"
+AimbotBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+AimbotBtn.Font = Enum.Font.GothamSemibold
+AimbotBtn.TextSize = 13
+AimbotBtn.BorderSizePixel = 0
+AimbotBtn.Parent = MainFrame
+
+-- 2. Botón Alternar WallCheck (Paredes)
+local WallCheckBtn = Instance.new("TextButton")
+WallCheckBtn.Size = UDim2.new(0, 220, 0, 32)
+WallCheckBtn.Position = UDim2.new(0, 20, 0, 95)
+WallCheckBtn.BackgroundColor3 = Color3.fromRGB(0, 180, 255)
+WallCheckBtn.Text = "WALLCHECK: ACTIVO"
+WallCheckBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+WallCheckBtn.Font = Enum.Font.GothamSemibold
+WallCheckBtn.TextSize = 13
+WallCheckBtn.BorderSizePixel = 0
+WallCheckBtn.Parent = MainFrame
+
+-- 3. Botón Ocultar/Mostrar Círculo FOV
+local ToggleCircleBtn = Instance.new("TextButton")
+ToggleCircleBtn.Size = UDim2.new(0, 220, 0, 32)
+ToggleCircleBtn.Position = UDim2.new(0, 20, 0, 140)
+ToggleCircleBtn.BackgroundColor3 = Color3.fromRGB(0, 180, 255)
+ToggleCircleBtn.Text = "CÍRCULO FOV: VISIBLE"
+ToggleCircleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+ToggleCircleBtn.Font = Enum.Font.GothamSemibold
+ToggleCircleBtn.TextSize = 13
+ToggleCircleBtn.BorderSizePixel = 0
+ToggleCircleBtn.Parent = MainFrame
+
+-- 4. Entrada de Texto para cambiar tamaño numérico (0 - 360+)
+local SizeLabel = Instance.new("TextLabel")
+SizeLabel.Size = UDim2.new(0, 120, 0, 32)
+SizeLabel.Position = UDim2.new(0, 20, 0, 195)
+SizeLabel.BackgroundTransparency = 1
+SizeLabel.Text = "TAMAÑO FOV:"
+SizeLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+SizeLabel.Font = Enum.Font.GothamSemibold
+SizeLabel.TextSize = 12
+SizeLabel.TextXAlignment = Enum.TextXAlignment.Left
+SizeLabel.Parent = MainFrame
+
+local SizeInput = Instance.new("TextBox")
+SizeInput.Size = UDim2.new(0, 90, 0, 32)
+SizeInput.Position = UDim2.new(0, 150, 0, 195)
+SizeInput.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+SizeInput.Text = tostring(AimbotSettings.FOV_Radius)
+SizeInput.TextColor3 = Color3.fromRGB(0, 180, 255)
+SizeInput.Font = Enum.Font.GothamBold
+SizeInput.TextSize = 14
+SizeInput.BorderSizePixel = 0
+SizeInput.Parent = MainFrame
+
+-- Texto informativo al pie del menú
+local InfoLabel = Instance.new("TextLabel")
+InfoLabel.Size = UDim2.new(1, 0, 0, 20)
+InfoLabel.Position = UDim2.new(0, 0, 1, -25)
+InfoLabel.BackgroundTransparency = 1
+InfoLabel.Text = "Presiona [ V ] para abrir/cerrar menú"
+InfoLabel.TextColor3 = Color3.fromRGB(100, 100, 100)
+InfoLabel.Font = Enum.Font.Gotham
+InfoLabel.TextSize = 11
+InfoLabel.Parent = MainFrame
+
+-- =============================================================================
+-- INTERACCIÓN DE LA INTERFAZ
+-- =============================================================================
+
+AimbotBtn.MouseButton1Click:Connect(function()
+    AimbotSettings.Enabled = not AimbotSettings.Enabled
+    AimbotBtn.Text = AimbotSettings.Enabled and "AIMBOT: ACTIVO" or "AIMBOT: INACTIVO"
+    AimbotBtn.BackgroundColor3 = AimbotSettings.Enabled and Color3.fromRGB(0, 180, 255) or Color3.fromRGB(50, 50, 50)
+end)
+
+WallCheckBtn.MouseButton1Click:Connect(function()
+    AimbotSettings.WallCheck = not AimbotSettings.WallCheck
+    WallCheckBtn.Text = AimbotSettings.WallCheck and "WALLCHECK: ACTIVO" or "WALLCHECK: INACTIVO"
+    WallCheckBtn.BackgroundColor3 = AimbotSettings.WallCheck and Color3.fromRGB(0, 180, 255) or Color3.fromRGB(50, 50, 50)
+end)
+
+ToggleCircleBtn.MouseButton1Click:Connect(function()
+    AimbotSettings.FOV_Visible = not AimbotSettings.FOV_Visible
+    ToggleCircleBtn.Text = AimbotSettings.FOV_Visible and "CÍRCULO FOV: VISIBLE" or "CÍRCULO FOV: OCULTO"
+    ToggleCircleBtn.BackgroundColor3 = AimbotSettings.FOV_Visible and Color3.fromRGB(0, 180, 255) or Color3.fromRGB(50, 50, 50)
+end)
+
+SizeInput.FocusLost:Connect(function(enterPressed)
+    local numericValue = tonumber(SizeInput.Text)
+    if numericValue then
+        AimbotSettings.FOV_Radius = math.clamp(numericValue, 0, 800)
+        SizeInput.Text = tostring(AimbotSettings.FOV_Radius)
+    else
+        SizeInput.Text = tostring(AimbotSettings.FOV_Radius)
+    end
+end)
+
+-- Tecla V para alternar visibilidad del menú
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if not gameProcessed and input.KeyCode == Enum.KeyCode.V then
+        MainFrame.Visible = not MainFrame.Visible
+    end
+end)
+
+-- =============================================================================
+-- DIBUJO DEL CÍRCULO FOV (DIBUJO DE ENTORNO NATIVO)
+-- =============================================================================
+local FOVCircle = Drawing.new("Circle")
+FOVCircle.Color = Color3.fromRGB(0, 180, 255)
+FOVCircle.Thickness = 1.5
+FOVCircle.NumSides = 64
+FOVCircle.Filled = false
+FOVCircle.Transparency = 0.8
+
+RunService.RenderStepped:Connect(function()
+    local screenSize = Camera.ViewportSize
+    FOVCircle.Visible = AimbotSettings.FOV_Visible and AimbotSettings.Enabled
+    FOVCircle.Radius = AimbotSettings.FOV_Radius
+    FOVCircle.Position = Vector2.new(screenSize.X / 2, (screenSize.Y / 2) + AimbotSettings.FOV_OffsetY)
+end)
+
+-- =============================================================================
+-- DETECCIÓN FÍSICA (WALLCHECK)
+-- =============================================================================
+local function IsVisible(targetCharacter)
+    if not AimbotSettings.WallCheck then return true end
+    
+    local targetHead = targetCharacter:FindFirstChild("Head")
+    if not targetHead then return false end
+
+    local rayOrigin = Camera.CFrame.Position
+    local rayDirection = (targetHead.Position - rayOrigin)
+    
+    local raycastParams = RaycastParams.new()
+    raycastParams.FilterDescendantsInstances = {LocalPlayer.Character}
+    raycastParams.FilterType = Enum.RaycastFilterType.Exclude
+
+    local result = game.Workspace:Raycast(rayOrigin, rayDirection, raycastParams)
+
+    if result and result.Instance:IsDescendantOf(targetCharacter) then
+        return true
+    end
+    return false
+end
+
+-- =============================================================================
+-- ENCONTRAR OBJETIVO Y APUNTADO ULTRA RÁPIDO
+-- =============================================================================
+local function GetClosestTarget()
+    local closestPlayer = nil
+    local shortestDistance = math.huge
+    local circleCenter = FOVCircle.Position
+
+    for _, player in pairs(game:GetService("Players"):GetPlayers()) do
+        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Head") then
+            local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
+            if humanoid and humanoid.Health > 0 then
+                
+                if IsVisible(player.Character) then
+                    local screenPos, onScreen = Camera:WorldToViewportPoint(player.Character.Head.Position)
+                    
+                    if onScreen then
+                        local targetPos2D = Vector2.new(screenPos.X, screenPos.Y)
+                        local distance = (targetPos2D - circleCenter).Magnitude
+
+                        if distance < AimbotSettings.FOV_Radius and distance < shortestDistance then
+                            closestPlayer = player
+                            shortestDistance = distance
+                        end
+                    end
+                end
+            end
+        end
+    end
+    return closestPlayer
+end
+
+-- Bucle de renderizado continuo para la mira agresiva
+RunService.RenderStepped:Connect(function()
+    if not AimbotSettings.Enabled then return end
+
+    local target = GetClosestTarget()
+    if target and target.Character and target.Character:FindFirstChild(AimbotSettings.TargetPart) then
+        local headPosition = target.Character[AimbotSettings.TargetPart].Position
+        Camera.CFrame = CFrame.new(Camera.CFrame.Position, headPosition)
+    end
+end)
