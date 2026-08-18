@@ -1,6 +1,157 @@
---[CODIGO ADAPTADO PARA MÓVIL]--
--- Este script reemplaza Drawing.new por GUI nativa y añade un botón táctil.
--- Configuración básica
-local AimbotSettings = {Enabled = true, TargetPart = "Head", FOV_Radius = 150}
-local Core = ... -- (Código simplificado, el usuario puede encontrar el código completo en la respuesta original y en el archivo Hshsb en su GitHub)
+-- KALEB PRO - ULTRA LIGHT DIRECT AIMBOT (0MS LAG)
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local player = Players.LocalPlayer
+local camera = workspace.CurrentCamera
 
+-- 1. MIRA DE COORDENADA CENTRAL FIJA (MÁXIMA ESTABILIDAD)
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "KalebLightAim"
+ScreenGui.Parent = player:WaitForChild("PlayerGui")
+ScreenGui.ResetOnSpawn = false
+
+local MobileCircle = Instance.new("Frame")
+MobileCircle.Name = "CenterCircle"
+MobileCircle.AnchorPoint = Vector2.new(0.5, 0.5)
+MobileCircle.Position = UDim2.new(0.5, 0, 0.42, 0) -- Mira centrada un poco arriba
+MobileCircle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+MobileCircle.BackgroundTransparency = 0.85
+MobileCircle.Visible = true
+MobileCircle.Parent = ScreenGui
+
+local Corner = Instance.new("UICorner", MobileCircle)
+Corner.CornerRadius = UDim.new(1, 0)
+
+local Stroke = Instance.new("UIStroke", MobileCircle)
+Stroke.Color = Color3.fromRGB(255, 255, 255)
+Stroke.Thickness = 1.5
+
+-- 2. MENÚ PLANO DIRECTO (SIN DECORACIONES PESADAS)
+local Main = Instance.new("Frame")
+Main.Size = UDim2.new(0, 220, 0, 180)
+Main.Position = UDim2.new(0.1, 0, 0.3, 0)
+Main.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+Main.Active = true
+Main.Draggable = true
+Main.Parent = ScreenGui
+
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, 0, 0, 35)
+Title.BackgroundTransparency = 1
+Title.Font = Enum.Font.SourceSansBold
+Title.Text = "=== KALEB RAGE LIGHT ==="
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.TextSize = 15
+Title.Parent = Main
+
+-- Botón Cerrar "X"
+local BtnMinimize = Instance.new("TextButton")
+BtnMinimize.Size = UDim2.new(0, 25, 0, 25)
+BtnMinimize.Position = UDim2.new(1, -30, 0, 5)
+BtnMinimize.BackgroundColor3 = Color3.fromRGB(50, 20, 20)
+BtnMinimize.Font = Enum.Font.SourceSansBold
+BtnMinimize.Text = "X"
+BtnMinimize.TextColor3 = Color3.fromRGB(255, 255, 255)
+BtnMinimize.TextSize = 13
+BtnMinimize.Parent = Main
+
+-- Botón Flotante para Reabrir
+local OpenButton = Instance.new("TextButton")
+OpenButton.Size = UDim2.new(0, 55, 0, 55)
+OpenButton.Position = UDim2.new(0.05, 0, 0.3, 0)
+OpenButton.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+OpenButton.Font = Enum.Font.SourceSansBold
+OpenButton.Text = "AIM"
+OpenButton.TextColor3 = Color3.fromRGB(255, 0, 50)
+OpenButton.TextSize = 13
+OpenButton.Visible = false
+OpenButton.Active = true
+OpenButton.Draggable = true
+OpenButton.Parent = ScreenGui
+Instance.new("UICorner", OpenButton).CornerRadius = UDim.new(1, 0)
+
+-- LÓGICA DE APERTURA / CIERRE DIRECTO
+BtnMinimize.MouseButton1Click:Connect(function()
+    Main.Visible = false
+    OpenButton.Visible = true
+end)
+
+OpenButton.MouseButton1Click:Connect(function()
+    OpenButton.Visible = false
+    Main.Visible = true
+end)
+
+-- 3. CREADOR DE BOTONES DEL PANEL
+local function createFlatButton(text, yPos)
+    local Btn = Instance.new("TextButton", Main)
+    Btn.Size = UDim2.new(0, 190, 0, 40)
+    Btn.Position = UDim2.new(0, 15, 0, yPos)
+    Btn.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
+    Btn.Font = Enum.Font.SourceSansBold
+    Btn.Text = text
+    Btn.TextColor3 = Color3.fromRGB(200, 200, 200)
+    Btn.TextSize = 14
+    return Btn
+end
+
+local BtnToggle = createFlatButton("RAGE LOCK: OFF", 50)
+local SizeInput = Instance.new("TextBox", Main)
+SizeInput.Size = UDim2.new(0, 190, 0, 35)
+SizeInput.Position = UDim2.new(0, 15, 0, 105)
+SizeInput.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
+SizeInput.Font = Enum.Font.SourceSans
+SizeInput.PlaceholderText = "Rango de Mira (Ej: 150)"
+SizeInput.Text = "150"
+SizeInput.TextColor3 = Color3.fromRGB(255, 255, 255)
+SizeInput.TextSize = 14
+
+-- VARIABLES OPERATIVAS
+local aimbotEnabled = false
+
+BtnToggle.MouseButton1Click:Connect(function()
+    aimbotEnabled = not aimbotEnabled
+    if aimbotEnabled then
+        BtnToggle.Text = "🔒 LOCK MAGNETICO ACTIVO"
+        BtnToggle.TextColor3 = Color3.fromRGB(0, 255, 150)
+        BtnToggle.BackgroundColor3 = Color3.fromRGB(20, 60, 30)
+    else
+        BtnToggle.Text = "RAGE LOCK: OFF"
+        BtnToggle.TextColor3 = Color3.fromRGB(200, 200, 200)
+        BtnToggle.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
+    end
+end)
+
+-- BUCLE CENTRAL OPTIMIZADO (SÓLO MATEMÁTICA PURA DIRECTA)
+RunService.RenderStepped:Connect(function()
+    local customSize = tonumber(SizeInput.Text) or 0
+    MobileCircle.Size = UDim2.new(0, customSize * 2, 0, customSize * 2)
+    MobileCircle.Visible = (customSize > 0)
+
+    if aimbotEnabled then
+        local nearestTarget = nil
+        local shortestDistance = customSize
+        local centerScreenPos = Vector2.new(camera.ViewportSize.X / 2, camera.ViewportSize.Y * 0.42)
+
+        -- Escaneo directo ultra veloz sin filtros de bloques pesados
+        for _, v in pairs(Players:GetPlayers()) do
+            if v ~= player and v.Character and v.Character:FindFirstChild("Head") and v.Character:FindFirstChild("Humanoid") and v.Character.Humanoid.Health > 0 then
+                local head = v.Character.Head
+                local screenPos, onScreen = camera:WorldToViewportPoint(head.Position)
+                
+                if onScreen then
+                    local distanceVector = (Vector2.new(screenPos.X, screenPos.Y) - centerScreenPos).Magnitude
+                    
+                    if distanceVector < shortestDistance then
+                        shortestDistance = distanceVector
+                        nearestTarget = head
+                    end
+                end
+            end
+        end
+
+        -- Fijado de mira inquebrantable a la cabeza en 0ms
+        if nearestTarget then
+            camera.CFrame = CFrame.new(camera.CFrame.Position, nearestTarget.Position)
+        end
+    end
+end)
